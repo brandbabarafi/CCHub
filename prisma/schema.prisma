@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String?
+  email       String   @unique
+  password    String
+  createdAt   DateTime @default(now())
+  memberships WorkspaceMember[]
+}
+
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  members   WorkspaceMember[]
+  pillars   ContentPillar[]
+  contents  Content[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        String    @default("owner")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+
+  @@unique([workspaceId, userId])
+}
+
+model ContentPillar {
+  id          String    @id @default(uuid())
+  workspaceId String
+  name        String
+  description String?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  contents    Content[]
+}
+
+model Content {
+  id           String    @id @default(uuid())
+  workspaceId  String
+  title        String
+  contentType  String?
+  platform     String?
+  pillarId     String?
+  publishDate  DateTime?
+  status       String    @default("idea")
+  brief        String?
+  referenceUrl String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  workspace Workspace      @relation(fields: [workspaceId], references: [id])
+  pillar    ContentPillar? @relation(fields: [pillarId], references: [id])
+}
