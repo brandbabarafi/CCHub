@@ -14,6 +14,7 @@ model User {
   password    String
   createdAt   DateTime @default(now())
   memberships WorkspaceMember[]
+  comments    Comment[]
 }
 
 model Workspace {
@@ -23,6 +24,7 @@ model Workspace {
   members   WorkspaceMember[]
   pillars   ContentPillar[]
   contents  Content[]
+  tags      Tag[]
 }
 
 model WorkspaceMember {
@@ -63,4 +65,44 @@ model Content {
 
   workspace Workspace      @relation(fields: [workspaceId], references: [id])
   pillar    ContentPillar? @relation(fields: [pillarId], references: [id])
+  tags      ContentTag[]
+  assets    MediaAsset[]
+  comments  Comment[]
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id])
+  contents    ContentTag[]
+}
+
+model ContentTag {
+  contentId String
+  tagId     String
+  content   Content @relation(fields: [contentId], references: [id])
+  tag       Tag     @relation(fields: [tagId], references: [id])
+
+  @@id([contentId, tagId])
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  contentId String
+  fileUrl   String
+  fileType  String?
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  contentId String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+  content   Content  @relation(fields: [contentId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
