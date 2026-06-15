@@ -21,10 +21,11 @@ model Workspace {
   id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
-  members   WorkspaceMember[]
-  pillars   ContentPillar[]
-  contents  Content[]
-  tags      Tag[]
+  members         WorkspaceMember[]
+  pillars         ContentPillar[]
+  contents        Content[]
+  tags            Tag[]
+  hookPerformance HookPerformance[]
 }
 
 model WorkspaceMember {
@@ -68,10 +69,11 @@ model Content {
   tags      ContentTag[]
   assets    MediaAsset[]
   comments  Comment[]
+  hooks     ContentHook[]
 }
 
 model Tag {
-  id          String   @id @default(uuid())
+  id          String     @id @default(uuid())
   workspaceId String
   name        String
   workspace   Workspace  @relation(fields: [workspaceId], references: [id])
@@ -105,4 +107,62 @@ model Comment {
   createdAt DateTime @default(now())
   content   Content  @relation(fields: [contentId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+}
+
+// ── HOOK INTELLIGENCE ────────────────────────────────
+
+model HookType {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  formulas    HookFormula[]
+  hooks       ContentHook[]
+  performance HookPerformance[]
+}
+
+model HookEmotion {
+  id    String        @id @default(uuid())
+  name  String        @unique
+  hooks ContentHook[]
+}
+
+model HookFormula {
+  id              String    @id @default(uuid())
+  hookTypeId      String
+  formulaName     String
+  formulaTemplate String?
+  description     String?
+  hookType        HookType  @relation(fields: [hookTypeId], references: [id])
+  hooks           ContentHook[]
+}
+
+model ContentHook {
+  id              String       @id @default(uuid())
+  contentId       String
+  hookText        String
+  hookTypeId      String?
+  formulaId       String?
+  emotionId       String?
+  confidenceScore Float?
+  createdAt       DateTime     @default(now())
+
+  content   Content      @relation(fields: [contentId], references: [id])
+  hookType  HookType?    @relation(fields: [hookTypeId], references: [id])
+  formula   HookFormula? @relation(fields: [formulaId], references: [id])
+  emotion   HookEmotion? @relation(fields: [emotionId], references: [id])
+}
+
+model HookPerformance {
+  id            String    @id @default(uuid())
+  workspaceId   String
+  hookTypeId    String
+  totalContents Int       @default(0)
+  avgViews      Float     @default(0)
+  avgRetention  Float     @default(0)
+  avgEngagement Float     @default(0)
+  avgShares     Float     @default(0)
+  calculatedAt  DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  hookType  HookType  @relation(fields: [hookTypeId], references: [id])
 }
